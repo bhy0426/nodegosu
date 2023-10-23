@@ -1,6 +1,6 @@
 "use strict";
 
-const { json } = require("express");
+const express = require("express");
 const db = require("../../models/db");
 const table = require("../../models/UserStorage");
 
@@ -10,12 +10,12 @@ const GET = {
     },
 
     login: (req, res) => {
-        res.send("여기는 로그인입니다.");
         db.query('SELECT * FROM Login_TB', (error, rows) => {
             if (error) throw error;
 
             table.tb_login = JSON.parse(JSON.stringify(rows));
             console.log(table.tb_login);
+            res.send(table.tb_login);
         });
     },
 };
@@ -23,7 +23,7 @@ const GET = {
 const POST = {
     login: (req, res) => {
         console.log(req.body);
-
+        console.log(table.tb_login)
         // -1 : 요청 성공
         // 1 : ID를 찾을 수 없음
         // 2 : ID에 대응하는 PW를 찾을 수 없음
@@ -38,9 +38,7 @@ const POST = {
             var data = JSON.parse(JSON.stringify(result));
             console.log(data);
             if (data != null) {
-                //console.log("row.id : " + result[0].id);
                 if (data.id == id_client) {
-                    //console.log("아이디 찾기 성공");
                     if (data.pw == pw_client) {
                         console.log("로그인 성공");
                         detail_code = -1;
