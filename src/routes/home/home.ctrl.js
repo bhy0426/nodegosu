@@ -5,6 +5,10 @@ const db = require("../../models/db");
 const table = require("../../models/UserStorage");
 
 const GET = {
+    root: (req, res) => {
+        res.render("index");
+    },
+
     login: (req, res) => {
         res.send("여기는 로그인입니다.");
         db.query('SELECT * FROM Login_TB', (error, rows) => {
