@@ -62,12 +62,17 @@ const POST = {
                 token = null;
             }
             // 로그인 결과를 res.json으로 반환
-            res.json({
-                "detailCode": detail_code,
-                "data": {
-                    "token": token
-                }
-            });
+            db.query("SELECT member_manageSeq FROM Member_TB Where id ='" + id_client + "'",
+            (error, row) => {
+                if(error) throw error;
+                console.log(row);
+                res.json({
+                    "detailCode": detail_code,
+                    "data": {
+                        "token": token
+                    }
+                });
+            })
         });
     },
 };
