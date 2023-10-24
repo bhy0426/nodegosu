@@ -65,7 +65,7 @@ const POST = {
             if (err) throw err;
             var data = JSON.parse(JSON.stringify(result));
             console.log(data);
-            if (data != null) {
+            if (data[0] != null) {
                 if (data[0].id == id_client) {
                     if (data[0].pw == pw_client) {
                         console.log("로그인 성공");
