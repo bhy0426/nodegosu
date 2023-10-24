@@ -206,7 +206,22 @@ const POST = {
     },
 
     timer: (req, res) => {
-        console.log(req.body);
+        db.query("SELECT * FROM Member_TB Where member_manageSeq='" + req.body.token + "'", (error, row) => {
+            if(error) throw error;
+            if(row[0] != null) {
+                console.log(row[0]);
+                console.log("토큰 확인 성공");
+                res.json({
+                    "detailCode" : "-1",
+                    "data" : {
+                        "goal" : "fa"
+                    }
+                });
+            }
+            else {
+                console.log("토큰이 올바르지 않습니다.");
+            }
+        });
     },
 };
 
