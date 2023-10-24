@@ -1,6 +1,5 @@
 "use strict";
 
-const express = require("express");
 const db = require("../../models/db");
 const table = require("../../models/UserStorage");
 
@@ -50,8 +49,8 @@ const GET = {
 const POST = {
     // POST/login
     login: (req, res) => {
-        console.log(req.body);
-        console.log(table.tb_login)
+        //console.log(req.body);
+        //console.log(table.tb_login)
         // -1 : 요청 성공
         // 1 : ID를 찾을 수 없음
         // 2 : ID에 대응하는 PW를 찾을 수 없음
@@ -64,16 +63,13 @@ const POST = {
         db.query(sqlrun, (err, result) => {
             if (err) throw err;
             var data = JSON.parse(JSON.stringify(result));
-            console.log(data);
+            //console.log(data);
             if (data != null) {
                 if (data[0].id == id_client) {
                     if (data[0].pw == pw_client) {
                         console.log("로그인 성공");
                         detail_code = -1;
                         token = "success";
-                        req.session.save(() => {
-                            console.log("세션 저장 성공");
-                        });
                     }
                     else {
                         console.log("비밀번호가 일치하지 않습니다.");
@@ -96,11 +92,11 @@ const POST = {
             db.query("SELECT member_manageSeq FROM Member_TB Where id ='" + id_client + "'",
                 (err, row) => {
                     if (err) throw err;
-                    console.log(row);
+                    // console.log(row[0].member_manageSeq);
                     res.json({
                         "detailCode": detail_code,
                         "data": {
-                            "token": token
+                            "token": row[0].member_manageSeq
                         }
                     });
                 })

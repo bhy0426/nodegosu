@@ -14,7 +14,7 @@ const options = {
 
 // 연결할 DB 정보입력
 const db = mysql.createConnection(options);
-const sessionStore = new MySQLStore(options);
+var sessionStore = new MySQLStore(options);
 
 app.use(
     session({
@@ -28,7 +28,7 @@ app.use(
 
 // 데이터베이스 연결
 db.connect();
-
+var sessionStore = new MySQLStore({}, db);
 // SHOW 쿼리문 사용
 // db.query('SHOW TABLES', (error, results) => {
 //     if (error) throw error;
