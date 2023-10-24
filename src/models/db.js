@@ -15,16 +15,14 @@ const options = {
 const db = mysql.createConnection(options);
 const sessionStore = new MySQLStore(options);
 
-app.use()
-
 // 데이터베이스 연결
 db.connect();
 
 // SHOW 쿼리문 사용
-db.query('SHOW TABLES', (error, results) => {
-    if (error) throw error;
-    console.log(results);
-})
+// db.query('SHOW TABLES', (error, results) => {
+//     if (error) throw error;
+//     console.log(results);
+// })
 
 // 연결 종료
 // db.end();
