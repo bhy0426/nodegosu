@@ -1,4 +1,5 @@
-const app = require("../../web");
+const express = require('express');
+const app = express();
 const mysql = require('mysql');
 const session = require('express-session');
 const MySQLStore = require('express-mysql-session')(session);
@@ -14,6 +15,16 @@ const options = {
 // 연결할 DB 정보입력
 const db = mysql.createConnection(options);
 const sessionStore = new MySQLStore(options);
+
+app.use(
+    session({
+        key: "session_cookie_name",
+        secret: "session_cookie_secret",
+        store: sessionStore,
+        resave: false,
+        saveUninitialized: false,
+    })
+);
 
 // 데이터베이스 연결
 db.connect();

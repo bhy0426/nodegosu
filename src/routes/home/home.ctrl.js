@@ -71,6 +71,9 @@ const POST = {
                         console.log("로그인 성공");
                         detail_code = -1;
                         token = "success";
+                        req.session.save(() => {
+                            console.log("세션 저장 성공");
+                        });
                     }
                     else {
                         console.log("비밀번호가 일치하지 않습니다.");
