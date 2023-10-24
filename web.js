@@ -11,12 +11,8 @@ app.use(express.static(`${__dirname}/src/public`));
 app.use(express.json());
 app.use("/", home);
 
-app.get('/', (req, res) => {
-    res.render('index')
-  })
-  
 app.listen(PORT, () => {
-    console.log("서버 가동");
+  console.log("서버 가동");
 });
 
 module.exports = app;
