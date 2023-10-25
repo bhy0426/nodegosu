@@ -46,6 +46,8 @@ const GET = {
             console.log(table.pk_memManSeq);
         });
     },
+
+    
 };
 
 const POST = {
@@ -356,20 +358,27 @@ const POST = {
 
     // POST/user/calendar
     // 캘린더 페이지는 종료 혹은 24시간 이후 저장되기 때문에 프론트에서 메모리에 데이터를 계속 저장해두어야 함
-    // 
     calendar: (req, res) => {
         let detail_code,
             token = req.body.token;
-
+            
             if(token == s_token) {
                 console.log("토큰 확인 성공");
-                db.query("SELECT subGoal FROM SubGoal_TB WHERE member_manageSeq='" + token, (err, subGoal) => {
+                db.query("SELECT subGoal FROM SubGoal_TB WHERE member_manageSeq=" + token, (err, subGoal) => {
                     if(err) throw err;
-                    db.query("SELECT todolist FROM Todolist_TB WHERE member_manageSeq='" + token, (err, todolist) => {
+                    db.query("SELECT todolist FROM Todolist_TB WHERE member_manageSeq=" + token, (err, todolist) => {
                         if(err) throw err;
-                        db.query("SELECT result FROM Calendar_TB WHERE member_manageSeq='" + token, (err, result) => {
+                        db.query("SELECT result FROM Calendar_TB WHERE member_manageSeq=" + token, (err, result) => {
                             if(err) throw err;
-                            
+                            detail_code = -1;
+                                res.json({
+                                    "detail_code" : detail_code,
+                                    "data" : {
+                                        "myGoal" : subGoal[0].subGoal,
+                                        "todolist" : todolist[0].todolist,
+                                        "calender" : result[0].result
+                                    }
+                                });
                         });
                     });
                 });
@@ -383,6 +392,33 @@ const POST = {
                 });
             }
     },
+    
+    // POST/user/save
+    // 24시 이후 혹은 어플 종료 시 데이터 저장 요청
+    save: (req, res) => {
+        let detail_code,
+            token = req.body.token,
+            // SubGoal_TB
+            myGoal = req.body.myGoal,
+            // Todolist_TB
+            todolist = [req.body.todolist.bool, req.body.todolist.bool];
+            // Ranking_TB
+            timer = req.body.timer;
+
+        if(token == s_token) {
+            console.log("토큰 확인 성공");
+            
+        }
+        else {
+            console.log("토큰이 일치하지 않습니다.");
+            detail_code = 0;
+            res.json({
+                "detail_code" : detail_code,
+                "data": null
+            });
+        }
+    },
+
 };
 
 module.exports = {
