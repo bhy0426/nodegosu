@@ -4,7 +4,6 @@ const express = require("express");
 const db = require("../../models/db");
 const table = require("../../models/UserStorage");
 let s_token = 0;
-let c_token = 0;
 
 const GET = {
     // GET/root
@@ -58,7 +57,7 @@ const POST = {
         // 1 : ID를 찾을 수 없음
         // 2 : ID에 대응하는 PW를 찾을 수 없음
         // 3 : 토큰에 일치하는 사용자를 찾을 수 없음
-        let detail_code = 0;
+        let detail_code = 0, token;
         const id_client = req.body.id,
             pw_client = req.body.pw;
 
@@ -78,31 +77,31 @@ const POST = {
                             if (data[0].pw == pw_client) {
                                 console.log("로그인 성공");
                                 detail_code = -1;
-                                c_token = row[0].member_manageSeq;
-                                s_token = c_token;
+                                token = row[0].member_manageSeq;
+                                s_token = token;
                             }
                             else {
                                 console.log("비밀번호가 일치하지 않습니다.");
                                 detail_code = 2;
-                                c_token = null;
+                                token = null;
                             }
                         }
                         else {
                             console.log("아이디가 일치하지 않습니다.");
                             detail_code = 1;
-                            c_token = null;
+                            token = null;
                         }
                     }
                     else {
                         console.log("DB에 존재하지 않는 아이디입니다.");
                         detail_code = 2;
-                        c_token = null;
+                        token = null;
                     }
                     // 로그인 결과를 res.json으로 반환
                     res.json({
                         "detailCode": detail_code,
                         "data": {
-                            "token": c_token
+                            "token": token
                         }
                     });
                 });
@@ -211,10 +210,11 @@ const POST = {
         });
     },
 
-    // POST/user/timer
-    timer: (req, res) => {
-        let detail_code = 0;
-
+    // POST/user/emptytimer
+    // Goal_TB에 
+    emptytimer: (req, res) => {
+        let detail_code,
+            token = req.body.token;
         // tb_member에 Member_TB 내용 저장
         db.query('SELECT * FROM Member_TB', (err, rows) => {
             if (err) throw err;
@@ -223,20 +223,23 @@ const POST = {
         });
 
         // 클라이언트 토큰과 일치하는 관리 번호를 가진 Goal_TB의 레코드의 goal_time이 0이면
-        if (req.body.token == s_token) {
+        if (token == s_token) {
             detail_code = -1;
             console.log("토큰 확인 성공");
-            db.query("SELECT time FROM Timer_TB WHERE member_manageSeq='" + s_token + "'", (error, time) => {
+            // Ranking_TB에서 총 타이머 시간을 불러옴
+            db.query("SELECT time FROM Ranking_TB WHERE member_manageSeq='" + s_token + "'", (error, time) => {
                 if (error) throw error;
+                // Goal_TB에 목표가 존재하는지 확인
                 db.query("SELECT goal_time FROM Goal_TB WHERE member_manageSeq='" + s_token + "'", (err, goalTime) => {
                     if (err) throw err;
                     // console.log(goalTime[0].goal_time);
                     let goal = false;
                     let name = table.tb_member[s_token - 1].name;
                     let timer = time[0].time;
-
+                     
                     // 목표가 존재하는지
-                    goal = goalTime[0].goal_time > 0 ? true : false;
+                    goal = goalTime[0].goal_time != '0' ? true : false;
+                    //console.log(goalTime[0].goal_time);
 
                     res.json({
                         "detailCode": detail_code,
@@ -256,6 +259,129 @@ const POST = {
                 "data": null
             });
         }
+    },
+
+    // POST/user/timer/goalsetting
+    // Goal_TB에 설정한 목표 추가
+    goalsetting: (req, res) => {
+        let detail_code;
+        let token = req.body.token, 
+            period = req.body.period, 
+            dayPeriod = req.body.dayPeriod,
+            money = req.body.money;
+        
+        if(token == s_token) {
+            console.log("토큰 확인 성공");
+            db.query("UPDATE Goal_TB SET goal_period = '" + period + "', " + "goal_time = '" + dayPeriod + "', " + "deposit = '" + money + "'" + " WHERE goal_manageSeq = " + token,
+                [token, token, dayPeriod, money, period],
+                (err) => {
+                    if (err) throw err;
+                    console.log("Goal_TB 내용 작성 성공");
+                    detail_code = -1;
+                    
+                    res.json({
+                        "detail_code": detail_code,
+                        "data": null
+                    });
+            });
+        }
+        else {
+            console.log("토큰이 일치하지 않습니다.");
+            detail_code = 0;
+
+            res.json({
+                "detail_code": detail_code,
+                "data": null
+            });
+        }  
+    },
+
+    // POST/user/timer
+    // Time_TB에서 오늘 타이머를 불러옴
+    timer: (req, res) => {
+        let detail_code,
+            token = req.body.token;
+
+        if(token == s_token) {
+            console.log("토큰 확인 성공");
+            db.query("SELECT time FROM Timer_TB WHERE member_manageSeq = '" + token + "'", (err, row) => {
+                if(err) throw err;
+                detail_code = -1;
+                res.json({
+                    "detail_code" : detail_code,
+                    "data": {
+                        "timer" : row[0].time
+                    }
+                });
+            });
+        }
+        else {
+            console.log("토큰이 일치하지 않습니다.");
+            detail_code = 0;
+            res.json({
+                "detail_code" : detail_code,
+                "data": null
+            });
+        }
+    },
+
+    // POST/user/timer/stop
+    // 현재까지의 타이머 데이터를 Timer_TB에 저장
+    timer_stop: (req, res) => {
+        let detail_code,
+            token = req.body.token,
+            timer = req.body.timer;
+
+        if(token == s_token) {
+            console.log("토큰 확인 성공");
+            db.query("UPDATE Timer_TB SET time = '" + timer + "'" + " WHERE member_manageSeq = " + token, (err) => {
+                if(err) throw err;
+                console.log("Timer_TB 내용 작성 성공");
+                detail_code = -1;
+                res.json({
+                    "detail_code" : detail_code,
+                    "data": null
+                });
+            });
+        }
+        else {
+            console.log("토큰이 일치하지 않습니다.");
+            detail_code = 0;
+            res.json({
+                "detail_code" : detail_code,
+                "data": null
+            });
+        }
+    },
+
+    // POST/user/calendar
+    // 캘린더 페이지는 종료 혹은 24시간 이후 저장되기 때문에 프론트에서 메모리에 데이터를 계속 저장해두어야 함
+    // 
+    calendar: (req, res) => {
+        let detail_code,
+            token = req.body.token;
+
+            if(token == s_token) {
+                console.log("토큰 확인 성공");
+                db.query("SELECT subGoal FROM SubGoal_TB WHERE member_manageSeq='" + token, (err, subGoal) => {
+                    if(err) throw err;
+                    db.query("SELECT todolist FROM Todolist_TB WHERE member_manageSeq='" + token, (err, todolist) => {
+                        if(err) throw err;
+                        db.query("SELECT result FROM Calendar_TB WHERE member_manageSeq='" + token, (err, result) => {
+                            if(err) throw err;
+                            
+                        });
+                    });
+                });
+            }
+            else {
+                console.log("토큰이 일치하지 않습니다.");
+                detail_code = 0;
+                res.json({
+                    "detail_code" : detail_code,
+                    "data": null
+                });
+            }
     },
 };
 

@@ -12,7 +12,10 @@ router.get("/signup", ctrl.GET.signup);
 // POST
 router.post("/login", ctrl.POST.login);
 router.post("/signup", ctrl.POST.signup);
+router.post("/user/emptytimer", ctrl.POST.emptytimer);
 router.post("/user/timer", ctrl.POST.timer);
+router.post("/user/timer/stop", ctrl.POST.timer_stop);
+router.post("/user/timer/goalsetting", ctrl.POST.goalsetting);
 
 
 module.exports = router;
