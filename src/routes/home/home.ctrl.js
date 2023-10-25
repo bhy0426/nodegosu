@@ -3,6 +3,8 @@
 const express = require("express");
 const db = require("../../models/db");
 const table = require("../../models/UserStorage");
+let s_token = 0;
+let c_token = 0;
 
 const GET = {
     // GET/root
@@ -41,8 +43,8 @@ const GET = {
         // tb_manSeq에 행 수 저장
         db.query('SELECT COUNT(*) AS count FROM Member_TB', (err, row) => {
             if (err) throw err;
-            table.tb_memManSeq = JSON.parse(JSON.stringify(row))[0].count;
-            console.log(table.tb_memManSeq);
+            table.pk_memManSeq = JSON.parse(JSON.stringify(row))[0].count;
+            console.log(table.pk_memManSeq);
         });
     },
 };
@@ -56,52 +58,56 @@ const POST = {
         // 1 : ID를 찾을 수 없음
         // 2 : ID에 대응하는 PW를 찾을 수 없음
         // 3 : 토큰에 일치하는 사용자를 찾을 수 없음
-        var detail_code = 0, token;
+        let detail_code = 0;
         const id_client = req.body.id,
             pw_client = req.body.pw;
 
-        let sqlrun = "SELECT * FROM Login_TB WHERE id='" + id_client + "'";
-        db.query(sqlrun, (err, result) => {
-            if (err) throw err;
-            var data = JSON.parse(JSON.stringify(result));
-            console.log(data);
-            if (data[0] != null) {
-                if (data[0].id == id_client) {
-                    if (data[0].pw == pw_client) {
-                        console.log("로그인 성공");
-                        detail_code = -1;
-                        token = "success";
+        db.query("SELECT member_manageSeq FROM Member_TB Where id ='" + id_client + "'",
+            (err, row) => {
+                if (err) throw err;
+                console.log(row[0].member_manageSeq);
+
+
+                let sqlrun = "SELECT * FROM Login_TB WHERE id='" + id_client + "'";
+                db.query(sqlrun, (err, result) => {
+                    if (err) throw err;
+                    var data = JSON.parse(JSON.stringify(result));
+                    console.log(data[0]);
+                    if (data[0] != null) {
+                        if (data[0].id == id_client) {
+                            if (data[0].pw == pw_client) {
+                                console.log("로그인 성공");
+                                detail_code = -1;
+                                c_token = row[0].member_manageSeq;
+                                s_token = c_token;
+                            }
+                            else {
+                                console.log("비밀번호가 일치하지 않습니다.");
+                                detail_code = 2;
+                                c_token = null;
+                            }
+                        }
+                        else {
+                            console.log("아이디가 일치하지 않습니다.");
+                            detail_code = 1;
+                            c_token = null;
+                        }
                     }
                     else {
-                        console.log("비밀번호가 일치하지 않습니다.");
+                        console.log("DB에 존재하지 않는 아이디입니다.");
                         detail_code = 2;
-                        token = null;
+                        c_token = null;
                     }
-                }
-                else {
-                    console.log("아이디가 일치하지 않습니다.");
-                    detail_code = 1;
-                    token = null;
-                }
-            }
-            else {
-                console.log("DB에 존재하지 않는 아이디입니다.");
-                detail_code = 2;
-                token = null;
-            }
-            // 로그인 결과를 res.json으로 반환
-            db.query("SELECT member_manageSeq FROM Member_TB Where id ='" + id_client + "'",
-                (err, row) => {
-                    if (err) throw err;
-                    console.log(row);
+                    // 로그인 결과를 res.json으로 반환
                     res.json({
                         "detailCode": detail_code,
                         "data": {
-                            "token": token
+                            "token": c_token
                         }
                     });
-                })
-        });
+                });
+            });
+
     },
     // POST/signup
     signup: (req, res) => {
@@ -111,7 +117,7 @@ const POST = {
         // 11 : 이미 존재하는 ID
         // 12 : 이미 존재하는 닉네임
         var detail_code = 0;
-        console.log(table.tb_memManSeq);
+        console.log(table.pk_memManSeq);
         const id_client = req.body.id,
             pw_client = req.body.pw,
             name_client = req.body.name,
@@ -146,49 +152,49 @@ const POST = {
                             });
                         // Member_TB에 memManSeq, id, name, nickname, email 저장
                         db.query('INSERT INTO Member_TB (member_manageSeq, id, name, nickname, email) VALUES (?, ?, ?, ?, ?)',
-                            [table.tb_memManSeq + 1, id_client, name_client, nickname_client, email_client],
+                            [table.pk_memManSeq + 1, id_client, name_client, nickname_client, email_client],
                             (err) => {
                                 if (err) throw err;
                                 console.log("Member_TB 내용 작성 성공");
                             });
                         // Goal_TB에 goalManSeq, memManSeq, goal_time, deposit, goal_period 저장
                         db.query('INSERT INTO Goal_TB (goal_manageSeq, member_manageSeq, goal_time, deposit, goal_period) VALUES (?, ?, ?, ?, ?)',
-                            [table.tb_memManSeq + 1, table.tb_memManSeq + 1, 0, 0, 0],
+                            [table.pk_memManSeq + 1, table.pk_memManSeq + 1, 0, 0, 0],
                             (err) => {
                                 if (err) throw err;
                                 console.log("Goal_TB 내용 작성 성공");
                             });
                         // Calendar_TB에 result, goalManSeq, memManSeq 저장
                         db.query('INSERT INTO Calendar_TB (result, goal_manageSeq, member_manageSeq) VALUES (?, ?, ?)',
-                            [0, table.tb_memManSeq + 1, table.tb_memManSeq + 1],
+                            [0, table.pk_memManSeq + 1, table.pk_memManSeq + 1],
                             (err) => {
                                 if (err) throw err;
                                 console.log("Calendar_TB 내용 작성 성공");
                             });
                         // Ranking_TB에 memManSeq, time 저장
                         db.query('INSERT INTO Ranking_TB (member_manageSeq, time) VALUES (?, ?)',
-                            [table.tb_memManSeq + 1, 0],
+                            [table.pk_memManSeq + 1, 0],
                             (err) => {
                                 if (err) throw err;
                                 console.log("Ranking_TB 내용 작성 성공");
                             });
                         // SubGoal_TB에 subGoal, goal_manageSeq, member_manageSeq 저장
                         db.query('INSERT INTO SubGoal_TB (subGoal, goal_manageSeq, member_manageSeq) VALUES (?, ?, ?)',
-                            [null, table.tb_memManSeq + 1, table.tb_memManSeq + 1],
+                            [null, table.pk_memManSeq + 1, table.pk_memManSeq + 1],
                             (err) => {
                                 if (err) throw err;
                                 console.log("SubGoal_TB 내용 작성 성공");
                             });
                         // Timer_TB에 member_manageSeq, time 저장
                         db.query('INSERT INTO Timer_TB (member_manageSeq, time) VALUES (?, ?)',
-                            [table.tb_memManSeq + 1, 0],
+                            [table.pk_memManSeq + 1, 0],
                             (err) => {
                                 if (err) throw err;
                                 console.log("Timer_TB 내용 작성 성공");
                             });
                         // Todolist_TB에 todolist, member_manageSeq 저장
                         db.query('INSERT INTO Todolist_TB (todolist, member_manageSeq) VALUES (?, ?)',
-                            [null, table.tb_memManSeq + 1],
+                            [null, table.pk_memManSeq + 1],
                             (err) => {
                                 if (err) throw err;
                                 console.log("Todolist_TB 내용 작성 성공");
@@ -205,16 +211,17 @@ const POST = {
         });
     },
 
+    // POST/user/timer
     timer: (req, res) => {
         db.query("SELECT * FROM Member_TB Where member_manageSeq='" + req.body.token + "'", (error, row) => {
-            if(error) throw error;
-            if(row[0] != null) {
+            if (error) throw error;
+            if (row[0] == s_token) {
                 console.log(row[0]);
                 console.log("토큰 확인 성공");
                 res.json({
-                    "detailCode" : "-1",
-                    "data" : {
-                        "goal" : "fa"
+                    "detailCode": "-1",
+                    "data": {
+                        "goal": "fa"
                     }
                 });
             }
