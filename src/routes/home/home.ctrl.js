@@ -213,22 +213,49 @@ const POST = {
 
     // POST/user/timer
     timer: (req, res) => {
-        db.query("SELECT * FROM Member_TB Where member_manageSeq='" + req.body.token + "'", (error, row) => {
-            if (error) throw error;
-            if (row[0] == s_token) {
-                console.log(row[0]);
-                console.log("토큰 확인 성공");
-                res.json({
-                    "detailCode": "-1",
-                    "data": {
-                        "goal": "fa"
-                    }
-                });
-            }
-            else {
-                console.log("토큰이 올바르지 않습니다.");
-            }
+        let detail_code = 0;
+
+        // tb_member에 Member_TB 내용 저장
+        db.query('SELECT * FROM Member_TB', (err, rows) => {
+            if (err) throw err;
+            table.tb_member = JSON.parse(JSON.stringify(rows));
+            console.log(table.tb_member);
         });
+
+        // 클라이언트 토큰과 일치하는 관리 번호를 가진 Goal_TB의 레코드의 goal_time이 0이면
+        if (req.body.token == s_token) {
+            detail_code = -1;
+            console.log("토큰 확인 성공");
+            db.query("SELECT time FROM Timer_TB WHERE member_manageSeq='" + s_token + "'", (error, time) => {
+                if (error) throw error;
+                db.query("SELECT goal_time FROM Goal_TB WHERE member_manageSeq='" + s_token + "'", (err, goalTime) => {
+                    if (err) throw err;
+                    // console.log(goalTime[0].goal_time);
+                    let goal = false;
+                    let name = table.tb_member[s_token - 1].name;
+                    let timer = time[0].time;
+
+                    // 목표가 존재하는지
+                    goal = goalTime[0].goal_time > 0 ? true : false;
+
+                    res.json({
+                        "detailCode": detail_code,
+                        "data": {
+                            "goal": goal,
+                            "me": [name, timer]
+                        }
+                    });
+                });
+            });
+        }
+        else {
+            console.log("토큰이 올바르지 않습니다.");
+            detail_code = 0;
+            res.json({
+                "detailCode": detail_code,
+                "data": null
+            });
+        }
     },
 };
 
