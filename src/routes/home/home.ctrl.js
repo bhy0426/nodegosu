@@ -47,7 +47,7 @@ const GET = {
         });
     },
 
-    
+
 };
 
 const POST = {
@@ -238,7 +238,7 @@ const POST = {
                     let goal = false;
                     let name = table.tb_member[s_token - 1].name;
                     let timer = time[0].time;
-                     
+
                     // 목표가 존재하는지
                     goal = goalTime[0].goal_time != '0' ? true : false;
                     //console.log(goalTime[0].goal_time);
@@ -267,12 +267,12 @@ const POST = {
     // Goal_TB에 설정한 목표 추가
     goalsetting: (req, res) => {
         let detail_code;
-        let token = req.body.token, 
-            period = req.body.period, 
+        let token = req.body.token,
+            period = req.body.period,
             dayPeriod = req.body.dayPeriod,
             money = req.body.money;
-        
-        if(token == s_token) {
+
+        if (token == s_token) {
             console.log("토큰 확인 성공");
             db.query("UPDATE Goal_TB SET goal_period = '" + period + "', " + "goal_time = '" + dayPeriod + "', " + "deposit = '" + money + "'" + " WHERE goal_manageSeq = " + token,
                 [token, token, dayPeriod, money, period],
@@ -280,12 +280,12 @@ const POST = {
                     if (err) throw err;
                     console.log("Goal_TB 내용 작성 성공");
                     detail_code = -1;
-                    
+
                     res.json({
                         "detail_code": detail_code,
                         "data": null
                     });
-            });
+                });
         }
         else {
             console.log("토큰이 일치하지 않습니다.");
@@ -295,7 +295,7 @@ const POST = {
                 "detail_code": detail_code,
                 "data": null
             });
-        }  
+        }
     },
 
     // POST/user/timer
@@ -304,15 +304,15 @@ const POST = {
         let detail_code,
             token = req.body.token;
 
-        if(token == s_token) {
+        if (token == s_token) {
             console.log("토큰 확인 성공");
             db.query("SELECT time FROM Timer_TB WHERE member_manageSeq = '" + token + "'", (err, row) => {
-                if(err) throw err;
+                if (err) throw err;
                 detail_code = -1;
                 res.json({
-                    "detail_code" : detail_code,
+                    "detail_code": detail_code,
                     "data": {
-                        "timer" : row[0].time
+                        "timer": row[0].time
                     }
                 });
             });
@@ -321,7 +321,7 @@ const POST = {
             console.log("토큰이 일치하지 않습니다.");
             detail_code = 0;
             res.json({
-                "detail_code" : detail_code,
+                "detail_code": detail_code,
                 "data": null
             });
         }
@@ -334,14 +334,14 @@ const POST = {
             token = req.body.token,
             timer = req.body.timer;
 
-        if(token == s_token) {
+        if (token == s_token) {
             console.log("토큰 확인 성공");
             db.query("UPDATE Timer_TB SET time = '" + timer + "'" + " WHERE member_manageSeq = " + token, (err) => {
-                if(err) throw err;
+                if (err) throw err;
                 console.log("Timer_TB 내용 작성 성공");
                 detail_code = -1;
                 res.json({
-                    "detail_code" : detail_code,
+                    "detail_code": detail_code,
                     "data": null
                 });
             });
@@ -350,7 +350,7 @@ const POST = {
             console.log("토큰이 일치하지 않습니다.");
             detail_code = 0;
             res.json({
-                "detail_code" : detail_code,
+                "detail_code": detail_code,
                 "data": null
             });
         }
@@ -361,38 +361,39 @@ const POST = {
     calendar: (req, res) => {
         let detail_code,
             token = req.body.token;
-            
-            if(token == s_token) {
-                console.log("토큰 확인 성공");
-                db.query("SELECT subGoal FROM SubGoal_TB WHERE member_manageSeq=" + token, (err, subGoal) => {
-                    if(err) throw err;
-                    db.query("SELECT todolist FROM Todolist_TB WHERE member_manageSeq=" + token, (err, todolist) => {
-                        if(err) throw err;
-                        db.query("SELECT result FROM Calendar_TB WHERE member_manageSeq=" + token, (err, result) => {
-                            if(err) throw err;
-                            detail_code = -1;
-                                res.json({
-                                    "detail_code" : detail_code,
-                                    "data" : {
-                                        "myGoal" : subGoal[0].subGoal,
-                                        "todolist" : todolist[0].todolist,
-                                        "calender" : result[0].result
-                                    }
-                                });
+
+        if (token == s_token) {
+            console.log("토큰 확인 성공");
+            db.query("SELECT subGoal FROM SubGoal_TB WHERE member_manageSeq=" + token, (err, subGoal) => {
+                if (err) throw err;
+                db.query("SELECT todolist_value, todolist_bool FROM Todolist_TB WHERE member_manageSeq=" + token, (err, todolist) => {
+                    if (err) throw err;
+                    db.query("SELECT result FROM Calendar_TB WHERE member_manageSeq=" + token, (err, result) => {
+                        if (err) throw err;
+                        detail_code = -1;
+                        let todolist_list = [todolist[0].todolist_bool, todolist[0].todolist_value];
+                        res.json({
+                            "detail_code": detail_code,
+                            "data": {
+                                "myGoal": subGoal[0].subGoal,
+                                "todolist": todolist_list,
+                                "calender": result[0].result
+                            }
                         });
                     });
                 });
-            }
-            else {
-                console.log("토큰이 일치하지 않습니다.");
-                detail_code = 0;
-                res.json({
-                    "detail_code" : detail_code,
-                    "data": null
-                });
-            }
+            });
+        }
+        else {
+            console.log("토큰이 일치하지 않습니다.");
+            detail_code = 0;
+            res.json({
+                "detail_code": detail_code,
+                "data": null
+            });
+        }
     },
-    
+
     // POST/user/save
     // 24시 이후 혹은 어플 종료 시 데이터 저장 요청
     save: (req, res) => {
@@ -402,18 +403,18 @@ const POST = {
             myGoal = req.body.myGoal,
             // Todolist_TB
             todolist = [req.body.todolist.bool, req.body.todolist.bool];
-            // Ranking_TB
-            timer = req.body.timer;
+        // Ranking_TB
+        timer = req.body.timer;
 
-        if(token == s_token) {
+        if (token == s_token) {
             console.log("토큰 확인 성공");
-            
+
         }
         else {
             console.log("토큰이 일치하지 않습니다.");
             detail_code = 0;
             res.json({
-                "detail_code" : detail_code,
+                "detail_code": detail_code,
                 "data": null
             });
         }
