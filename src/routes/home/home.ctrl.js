@@ -166,8 +166,8 @@ const POST = {
                                 console.log("Goal_TB 내용 작성 성공");
                             });
                         // Calendar_TB에 result, goalManSeq, memManSeq 저장
-                        db.query('INSERT INTO Calendar_TB (result, goal_manageSeq, member_manageSeq) VALUES (?, ?, ?)',
-                            [0, table.pk_memManSeq + 1, table.pk_memManSeq + 1],
+                        db.query('INSERT INTO Calendar_TB (success, fail, goal_manageSeq, member_manageSeq) VALUES (?, ?, ?, ?)',
+                            [0, 0, table.pk_memManSeq + 1, table.pk_memManSeq + 1],
                             (err) => {
                                 if (err) throw err;
                                 console.log("Calendar_TB 내용 작성 성공");
@@ -368,16 +368,18 @@ const POST = {
                 if (err) throw err;
                 db.query("SELECT todolist_value, todolist_bool FROM Todolist_TB WHERE member_manageSeq=" + token, (err, todolist) => {
                     if (err) throw err;
-                    db.query("SELECT result FROM Calendar_TB WHERE member_manageSeq=" + token, (err, result) => {
+                    db.query("SELECT success, fail FROM Calendar_TB WHERE member_manageSeq=" + token, (err, result) => {
                         if (err) throw err;
                         detail_code = -1;
                         let todolist_list = [todolist[0].todolist_bool, todolist[0].todolist_value];
+                        console.log(result[0]);
                         res.json({
                             "detail_code": detail_code,
                             "data": {
                                 "myGoal": subGoal[0].subGoal,
                                 "todolist": todolist_list,
-                                "calender": result[0].result
+                                "success": result[0].success,
+                                "fail": result[0].fail
                             }
                         });
                     });
