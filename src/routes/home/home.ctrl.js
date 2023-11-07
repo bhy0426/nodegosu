@@ -405,12 +405,19 @@ const POST = {
             myGoal = req.body.myGoal,
             // Todolist_TB
             todolist = [req.body.todolist.bool, req.body.todolist.bool];
-        // Ranking_TB
-        timer = req.body.timer;
+            // Ranking_TB
+            timer = req.body.timer;
 
         if (token == s_token) {
             console.log("토큰 확인 성공");
 
+            db.query("")
+
+            detail_code = -1;
+            res.json({
+                "detail_code": detail_code,
+                "data": null
+            });
         }
         else {
             console.log("토큰이 일치하지 않습니다.");
@@ -422,6 +429,27 @@ const POST = {
         }
     },
 
+    logout: (req, res) => {
+        let detail_code,
+            token = req.body.token;
+
+            if(token == s_token) {
+                console.log("토큰 확인 성공");
+                detail_code = -1;
+                res.json({
+                    "detail_code": detail_code,
+                    "data": null
+                });
+            }
+            else {
+                console.log("토큰이 일치하지 않습니다.");
+                detail_code = 0;
+                res.json({
+                    "detail_code": detail_code,
+                    "data": null
+                });
+            }
+    },
 };
 
 module.exports = {
